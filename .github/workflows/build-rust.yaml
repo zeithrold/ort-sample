@@ -1,0 +1,36 @@
+name: Build Rust Application
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        - runner-os: ubuntu-latest
+          os: linux-amd64
+        - runner-os: macos-13
+          os: macos-amd64
+        - runner-os: macos-latest
+          os: macos-amd64
+        - runner-os: windows-latest
+          os: windows-amd64
+
+    runs-on: ${{ matrix.runner-os }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Build
+      run: cargo build --release
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: rust-binary-${{ matrix.os }}
+        path: target/release/ort-sample
