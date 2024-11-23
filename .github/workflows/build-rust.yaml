@@ -3,20 +3,53 @@ name: Build Rust Application
 on: [push, pull_request]
 
 jobs:
+  build-onnxruntime-directml:
+    outputs:
+      artifact: ${{ steps.upload-artifact.outputs.artifact }}
+    # Since DirectML can not built without local prebuilt onnxruntime,
+    # we need to build onnxruntime first.
+    runs-on: windows-latest
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        repository: microsoft/onnxruntime
+        ref: v1.20.1
+        submodules: 'recursive'
+
+    - name: Build onnxruntime with DML
+      run: build.bat --config RelWithDebInfo --build_shared_lib --parallel --use_dml
+
+    - name: Upload artifact
+      id: upload-artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: onnxruntime-directml
+        path: build
+
   build:
     strategy:
       matrix:
         platform:
           - runner-os: ubuntu-latest
             os: linux-amd64
+            provider: cuda
           - runner-os: macos-13
             os: macos-amd64
+            provider: coreml
           - runner-os: macos-latest
             os: macos-arm64
+            provider: coreml
           - runner-os: windows-latest
             os: windows-amd64
+            provider: directml
+          - runner-os: windows-latest
+            os: windows-amd64
+            provider: cuda
 
     runs-on: ${{ matrix.platform.runner-os }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -27,11 +60,29 @@ jobs:
         toolchain: stable
         override: true
 
+    - name: Download onnxruntime-directml artifact
+      if: ${{ matrix.platform.provider == 'directml' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: onnxruntime-directml
+        path: onnxruntime
+
+
+    - name: Display structure of downloaded files
+      run: ls -R onnxruntime
+
+    - name: Build (with DirectML)
+      if: ${{ matrix.platform.provider == 'directml' }}
+      run: cargo build --release --features directml --target ${{ matrix.platform.os }}
+      env:
+        ORT_LIB_LOCATION: build/Windows
+
     - name: Build
-      run: cargo build --release
+      if: ${{ matrix.platform.provider != 'directml' }}
+      run: cargo build --release --features ${{ matrix.platform.provider }}
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: rust-binary-${{ matrix.platform.os }}
+        name: rust-binary-${{ matrix.platform.os }}-${{ matrix.platform.provider }}
         path: target/release/ort-sample

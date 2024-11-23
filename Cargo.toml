@@ -8,6 +8,11 @@ anyhow = "1.0.93"
 fern = { version = "0.7.0", features = ["colored"] }
 humantime = "2.1.0"
 log = "0.4.22"
-ort = { version = "=2.0.0-rc.8", features = ["directml", "coreml", "cuda", "rocm"]}
+ort = "=2.0.0-rc.8"
 ort-sys = "=2.0.0-rc.8"
 native-dialog = { version = "0.7.0", features = ["windows_dpi_awareness", "windows_visual_styles"] }
+
+[features]
+cuda = ["ort/cuda"]
+directml = ["ort/directml"]
+coreml = ["ort/coreml"]
