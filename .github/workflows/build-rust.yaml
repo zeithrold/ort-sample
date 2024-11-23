@@ -2,6 +2,9 @@ name: Build Rust Application
 
 on: [push, pull_request]
 
+env:
+  ONNXRUNTIME_VERSION: "1.20.1"
+
 jobs:
   build-onnxruntime-directml:
     outputs:
@@ -10,15 +13,24 @@ jobs:
     # we need to build onnxruntime first.
     runs-on: windows-latest
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         repository: microsoft/onnxruntime
-        ref: v1.20.1
+        ref: v${{ env.ONNXRUNTIME_VERSION }}
         submodules: 'recursive'
+    
+    - name: Set Up Cache
+      uses: actions/cache@v4
+      id: build-cache
+      with:
+        path: build
+        key: ${{ env.ONNXRUNTIME_VERSION }}
 
     - name: Build onnxruntime with DML
-      run: .\\build.bat --config RelWithDebInfo --build_shared_lib --parallel --use_dml
+      if: steps.build-cache.outputs.cache-hit != 'true'
+      run: .\\build.bat --config RelWithDebInfo --build_shared_lib --parallel --use_dml --skip_tests
 
     - name: Upload artifact
       id: upload-artifact
