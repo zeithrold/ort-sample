@@ -18,7 +18,7 @@ jobs:
         submodules: 'recursive'
 
     - name: Build onnxruntime with DML
-      run: build.bat --config RelWithDebInfo --build_shared_lib --parallel --use_dml
+      run: .\\build.bat --config RelWithDebInfo --build_shared_lib --parallel --use_dml
 
     - name: Upload artifact
       id: upload-artifact
