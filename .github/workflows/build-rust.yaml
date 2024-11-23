@@ -30,7 +30,7 @@ jobs:
 
     - name: Build onnxruntime with DML
       if: steps.build-cache.outputs.cache-hit != 'true'
-      run: .\\build.bat --config RelWithDebInfo --build_shared_lib --parallel --use_dml --skip_tests
+      run: .\\build.bat --config Release --build_shared_lib --parallel --use_dml --skip_tests
 
     - name: Upload artifact
       id: upload-artifact
