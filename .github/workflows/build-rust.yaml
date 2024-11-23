@@ -12,7 +12,7 @@ jobs:
           - runner-os: macos-13
             os: macos-amd64
           - runner-os: macos-latest
-            os: macos-amd64
+            os: macos-arm64
           - runner-os: windows-latest
             os: windows-amd64
 
