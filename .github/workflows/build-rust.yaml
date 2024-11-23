@@ -10,7 +10,6 @@ jobs:
     # we need to build onnxruntime first.
     runs-on: windows-latest
     steps:
-
     - name: Checkout code
       uses: actions/checkout@v4
       with:
@@ -29,6 +28,7 @@ jobs:
         path: build
 
   build:
+    needs: build-onnxruntime-directml
     strategy:
       matrix:
         platform:
@@ -66,7 +66,6 @@ jobs:
       with:
         name: onnxruntime-directml
         path: onnxruntime
-
 
     - name: Display structure of downloaded files
       run: ls -R onnxruntime
