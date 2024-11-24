@@ -83,3 +83,6 @@ jobs:
         path: |
           ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}
           ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}.exe
+          ${{ env.REPO_NAME }}/target/release/*.so
+          ${{ env.REPO_NAME }}/target/release/*.dll
+          ${{ env.REPO_NAME }}/target/release/*.lib
