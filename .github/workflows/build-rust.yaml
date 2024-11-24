@@ -47,20 +47,20 @@ jobs:
 
     - name: Build ONNX Runtime
       if: ${{ matrix.platform.provider == 'directml' && steps.build-cache.outputs.cache-hit != 'true' }}
-      run: .\\build.bat --config Release --parallel --use_dml --skip_tests
-
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+      working-directory: onnxruntime
+      run: .\build.bat --config Release --parallel --use_dml --skip_tests
 
     - name: List ONNX Runtime with DirectML build
       if: ${{ matrix.platform.provider == 'directml' }}
       run: ls ${{ github.workspace }}\onnxruntime\build\Windows
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        path: ort-sample
+
+    - name: Set up Rust
+      run: rustup default stable
 
     - name: Build (with DirectML)
       if: ${{ matrix.platform.provider == 'directml' }}
@@ -71,6 +71,7 @@ jobs:
 
     - name: Build
       if: ${{ matrix.platform.provider != 'directml' }}
+      working-directory: ort-sample
       run: cargo build --release --features ${{ matrix.platform.provider }}
 
     - name: Upload artifact
