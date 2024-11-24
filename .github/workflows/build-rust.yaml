@@ -68,7 +68,7 @@ jobs:
       working-directory: ort-sample
       env:
         # Should be set absolute path to onnxruntime/Windows
-        ORT_LIB_LOCATION: ${{ github.workspace }}\onnxruntime\build\Windows
+        ORT_LIB_LOCATION: ${{ github.workspace }}\onnxruntime\build\Windows\Release
 
     - name: Build
       if: ${{ matrix.platform.provider != 'directml' }}

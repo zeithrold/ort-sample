@@ -1,7 +1,10 @@
 use anyhow::{Ok, Result};
 use log::info;
-use ort::{
-    CUDAExecutionProvider, CoreMLExecutionProvider, DirectMLExecutionProvider, ExecutionProvider,
+use ort::execution_providers::{
+    CUDAExecutionProvider,
+    CoreMLExecutionProvider,
+    DirectMLExecutionProvider,
+    ExecutionProvider
 };
 
 pub struct ProviderCheckResult {
