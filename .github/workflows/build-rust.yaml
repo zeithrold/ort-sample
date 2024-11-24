@@ -76,14 +76,19 @@ jobs:
       working-directory: ${{ env.REPO_NAME }}
       run: cargo build --release --features ${{ matrix.platform.provider }}
 
+    - name: Collect artifacts
+      shell: bash
+      run: |
+        mkdir -p dist
+        cp ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }} dist/ || \
+          cp ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}.exe dist/ || \
+          cp ${{ env.REPO_NAME }}/target/release/*.so dist/ || \
+          cp ${{ env.REPO_NAME }}/target/release/*.dll dist/ || \
+          cp ${{ env.REPO_NAME }}/target/release/*.lib dist/ || \
+          cp onnxruntime/build/Windows/Release/Release/DirectML.dll dist/ || true
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: rust-binary-${{ matrix.platform.os }}-${{ matrix.platform.provider }}
-        path: |
-          ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}
-          ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}.exe
-          ${{ env.REPO_NAME }}/target/release/*.so
-          ${{ env.REPO_NAME }}/target/release/*.dll
-          ${{ env.REPO_NAME }}/target/release/*.lib
-          onnxruntime/build/Windows/Release/Release/DirectML.dll
+        path: dist
