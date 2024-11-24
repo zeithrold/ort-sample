@@ -85,11 +85,11 @@ jobs:
     
     - name: Extract onnxruntime-directml artifact
       if: ${{ matrix.platform.provider == 'directml' }}
-      run: 7z x download\build.7z -o$GITHUB_WORKSPACE\onnxruntime
+      run: 7z x download\build.7z -o${{ github.workspace }}\onnxruntime
 
     - name: List onnxruntime-directml artifact
       if: ${{ matrix.platform.provider == 'directml' }}
-      run: ls $GITHUB_WORKSPACE\onnxruntime\Windows
+      run: ls ${{ github.workspace }}\onnxruntime\Windows
 
     - name: Build (with DirectML)
       if: ${{ matrix.platform.provider == 'directml' }}
