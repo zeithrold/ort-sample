@@ -73,7 +73,7 @@ jobs:
 
     - name: Build
       if: ${{ matrix.platform.provider != 'directml' }}
-      working-directory: ort-sample
+      working-directory: ${{ env.REPO_NAME }}
       run: cargo build --release --features ${{ matrix.platform.provider }}
 
     - name: Upload artifact
@@ -81,5 +81,5 @@ jobs:
       with:
         name: rust-binary-${{ matrix.platform.os }}-${{ matrix.platform.provider }}
         path: |
-          ${{ env.REPO_NAME }}/target/release/ort-sample
-          ${{ env.REPO_NAME }}/target/release/ort-sample.exe
+          ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}
+          ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}.exe
