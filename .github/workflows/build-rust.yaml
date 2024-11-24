@@ -21,16 +21,19 @@ jobs:
         ref: v${{ env.ONNXRUNTIME_VERSION }}
         submodules: 'recursive'
     
-    - name: Set Up Cache
+    - name: Set up Cache
       uses: actions/cache@v4
       id: build-cache
       with:
         path: build
-        key: ${{ env.ONNXRUNTIME_VERSION }}
+        key: onnxruntime-directml-${{ env.ONNXRUNTIME_VERSION }}
 
-    - name: Build onnxruntime with DML
+    - name: Build onnxruntime with DirectML
       if: steps.build-cache.outputs.cache-hit != 'true'
       run: .\\build.bat --config Release --parallel --use_dml --skip_tests
+
+    - name: Remove unnecessary files
+      run: rm -rf build/Windows/Release/_deps
 
     - name: Upload artifact
       id: upload-artifact
@@ -38,6 +41,7 @@ jobs:
       with:
         name: onnxruntime-directml
         path: build
+
 
   build:
     needs: build-onnxruntime-directml
