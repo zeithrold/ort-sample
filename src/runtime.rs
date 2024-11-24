@@ -1,106 +1,90 @@
 use log::{info, warn};
+use ndarray::array;
 use ort::{
     execution_providers::{
         CPUExecutionProvider, CUDAExecutionProvider, CoreMLExecutionProvider,
         DirectMLExecutionProvider, ExecutionProvider,
     },
     session::{
-        builder::{GraphOptimizationLevel, SessionBuilder},
-        Session,
+        builder::{GraphOptimizationLevel, SessionBuilder}, Session
     },
 };
 
-use ndarray::prelude::*;
 
-pub struct ResultByProvider {
-    cuda: bool,
-    directml: bool,
-    coreml: bool,
-    cpu: bool,
+pub fn create_session_builder() -> anyhow::Result<SessionBuilder> {
+    Ok(Session::builder()?
+        .with_optimization_level(GraphOptimizationLevel::Level3)?
+        .with_intra_threads(4)?)
 }
 
-impl ResultByProvider {
-    pub fn to_message(&self) -> String {
-        format!(
-            "cuda_supported: {}, directml_supported: {}, coreml_supported: {}, cpu_supported: {}",
-            self.cuda, self.directml, self.coreml, self.cpu
-        )
-    }
+pub fn create_session(provider: Box<dyn ExecutionProvider>) -> anyhow::Result<Session> {
+    info!("Creating Session...");
+    let mut session = create_session_builder()?;
+    provider.register(&mut session)?;
+    info!("Session is created");
+    let session = session.commit_from_file("model.onnx")?;
+    Ok(session)
 }
 
-pub fn check_provider() -> anyhow::Result<ResultByProvider> {
-    info!("Checking Providers...");
-    let cuda = CUDAExecutionProvider::default().is_available()?;
-    let directml = DirectMLExecutionProvider::default().is_available()?;
-    let coreml = CoreMLExecutionProvider::default().is_available()?;
-    let cpu = CPUExecutionProvider::default().is_available()?;
-    let result = ResultByProvider {
-        cuda,
-        directml,
-        coreml,
-        cpu,
-    };
-    info!("{}", result.to_message());
-    Ok(result)
+pub fn create_test_ndarray() -> ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>
+{
+    array![[1.0f32, 2.0f32], [2.0f32, 3.0f32]]
 }
 
-pub fn create_providers(session: &mut SessionBuilder) -> anyhow::Result<()> {
-    info!("Creating Providers...");
-    let cuda = CUDAExecutionProvider::default();
-    if cuda.is_available()? {
-        if cuda.register(session).is_err() {
-            warn!("Failed to register CUDAExecutionProvider");
+pub fn session_test_run(session: Session) -> anyhow::Result<()> {
+    info!("Running Session...");
+    let input = create_test_ndarray();
+    let onnx_input = ort::inputs!["input" => input.view()]?;
+    info!("Input: {:?}", input);
+    let output = session.run(onnx_input)?;
+    info!("Output: {:?}", output);
+    info!("Done");
+    Ok(())
+}
+
+pub fn range_providers() -> anyhow::Result<()> {
+    let providers: Vec<(Box<dyn ExecutionProvider>, String)> = vec![
+        (
+            Box::new(CUDAExecutionProvider::default()),
+            "CUDA".to_string(),
+        ),
+        (
+            Box::new(DirectMLExecutionProvider::default()),
+            "DirectML".to_string(),
+        ),
+        (
+            Box::new(CoreMLExecutionProvider::default()),
+            "CoreML".to_string(),
+        ),
+        (Box::new(CPUExecutionProvider::default()), "CPU".to_string()),
+    ];
+    for (provider, name) in providers {
+        let result = provider.is_available()?;
+        if result {
+            info!("{} is available", name);
+            let session = match create_session(provider) {
+                Ok(session) => {session},
+                Err(err) => {
+                    warn!("Failed to create session even with available provider: {}", name);
+                    warn!("{}", err);
+                    continue;
+                },
+            };
+            match session_test_run(session) {
+                Ok(_) => {},
+                Err(err) => {
+                    warn!("Failed to run session with provider: {}", name);
+                    warn!("{}", err);
+                },
+            }
         } else {
-            info!("CUDAExecutionProvider is registered");
-        }
-    }
-    let directml = DirectMLExecutionProvider::default();
-    if directml.is_available()? {
-        if directml.register(session).is_err() {
-            warn!("Failed to register DirectMLExecutionProvider");
-        } else {
-            info!("DirectMLExecutionProvider is registered");
-        }
-    }
-    let coreml = CoreMLExecutionProvider::default();
-    if coreml.is_available()? {
-        if coreml.register(session).is_err() {
-            warn!("Failed to register CoreMLExecutionProvider");
-        } else {
-            info!("CoreMLExecutionProvider is registered");
-        }
-    }
-    let cpu = CPUExecutionProvider::default();
-    if cpu.is_available()? {
-        if cpu.register(session).is_err() {
-            warn!("Failed to register CPUExecutionProvider");
-        } else {
-            info!("CPUExecutionProvider is registered");
+            info!("{} is not available", name);
         }
     }
     Ok(())
 }
 
-pub fn create_session() -> anyhow::Result<Session> {
-    let mut model = Session::builder()?
-        .with_optimization_level(GraphOptimizationLevel::Level3)?
-        .with_intra_threads(4)?;
-    create_providers(&mut model)?;
-    Ok(model.commit_from_file("model.onnx")?)
-}
-
-pub fn run() -> anyhow::Result<String> {
-    info!("Running...");
-    info!("Creating Session...");
-    let session = create_session()?;
-
-    // Use f32
-    let input = array![[1.0f32, 2.0f32], [2.0f32, 3.0f32]];
-    let onnx_input = ort::inputs!["input" => input.view()]?;
-    info!("Input: {:?}", input);
-    info!("Running Session...");
-    let output = session.run(onnx_input)?;
-    info!("Output: {:?}", output);
-    info!("Done");
-    Ok(format!("{:?}", output))
+pub fn run() -> anyhow::Result<()> {
+    range_providers()?;
+    Ok(())
 }
