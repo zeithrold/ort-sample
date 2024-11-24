@@ -6,45 +6,7 @@ env:
   ONNXRUNTIME_VERSION: "1.20.1"
 
 jobs:
-  build-onnxruntime-directml:
-    outputs:
-      artifact: ${{ steps.upload-artifact.outputs.artifact }}
-    # Since DirectML can not built without local prebuilt onnxruntime,
-    # we need to build onnxruntime first.
-    runs-on: windows-latest
-    steps:
-
-    - name: Set up cache
-      uses: actions/cache@v4
-      id: build-cache
-      with:
-        path: build
-        key: onnxruntime-directml-${{ env.ONNXRUNTIME_VERSION }}
-
-    - name: Checkout code
-      uses: actions/checkout@v4
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      with:
-        repository: microsoft/onnxruntime
-        ref: v${{ env.ONNXRUNTIME_VERSION }}
-        submodules: 'recursive'
-    
-    - name: Build ONNX Runtime with DirectML
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      run: .\\build.bat --config Release --parallel --use_dml --skip_tests
-
-    - name: Make archive
-      run: 7z a build.7z build
-
-    - name: Upload artifact
-      id: upload-artifact
-      uses: actions/upload-artifact@v4
-      with:
-        path: build.7z
-        name: onnxruntime-directml
-
   build:
-    needs: build-onnxruntime-directml
     strategy:
       matrix:
         platform:
@@ -65,8 +27,27 @@ jobs:
             provider: cuda
 
     runs-on: ${{ matrix.platform.runner-os }}
-
     steps:
+    - name: Set up cache
+      uses: actions/cache@v4
+      id: build-cache
+      if: ${{ matrix.platform.provider == 'directml' }}
+      with:
+        path: onnxruntime
+        key: onnxruntime-${{ env.ONNXRUNTIME_VERSION }}-${{ matrix.platform.provider }}
+
+    - name: Checkout ONNX Runtime
+      uses: actions/checkout@v4
+      if: ${{ matrix.platform.provider == 'directml' && steps.build-cache.outputs.cache-hit != 'true' }}
+      with:
+        repository: microsoft/onnxruntime
+        ref: v${{ env.ONNXRUNTIME_VERSION }}
+        submodules: 'recursive'
+
+    - name: Build ONNX Runtime
+      if: ${{ matrix.platform.provider == 'directml' && steps.build-cache.outputs.cache-hit != 'true' }}
+      run: .\\build.bat --config Release --parallel --use_dml --skip_tests
+
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -76,27 +57,16 @@ jobs:
         toolchain: stable
         override: true
 
-    - name: Download onnxruntime-directml artifact
+    - name: List ONNX Runtime with DirectML build
       if: ${{ matrix.platform.provider == 'directml' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: onnxruntime-directml
-        path: download
-    
-    - name: Extract onnxruntime-directml artifact
-      if: ${{ matrix.platform.provider == 'directml' }}
-      run: 7z x download\build.7z -o${{ github.workspace }}\onnxruntime
-
-    - name: List onnxruntime-directml artifact
-      if: ${{ matrix.platform.provider == 'directml' }}
-      run: ls ${{ github.workspace }}\onnxruntime\Windows
+      run: ls ${{ github.workspace }}\onnxruntime\build\Windows
 
     - name: Build (with DirectML)
       if: ${{ matrix.platform.provider == 'directml' }}
       run: cargo build --release --features directml
       env:
         # Should be set absolute path to onnxruntime/Windows
-        ORT_LIB_LOCATION: ${{ github.workspace }}\onnxruntime\Windows
+        ORT_LIB_LOCATION: ${{ github.workspace }}\onnxruntime\build\Windows
 
     - name: Build
       if: ${{ matrix.platform.provider != 'directml' }}
