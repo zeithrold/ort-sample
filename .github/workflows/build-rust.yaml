@@ -85,14 +85,11 @@ jobs:
         name: onnxruntime-directml
         path: onnxruntime
 
-    - name: Display structure of downloaded files
-      run: ls -R .
-
     - name: Build (with DirectML)
       if: ${{ matrix.platform.provider == 'directml' }}
       run: cargo build --release --features directml
       env:
-        ORT_LIB_LOCATION: build/Windows
+        ORT_LIB_LOCATION: ./onnxruntime/Windows
 
     - name: Build
       if: ${{ matrix.platform.provider != 'directml' }}
