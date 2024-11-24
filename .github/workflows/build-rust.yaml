@@ -89,7 +89,8 @@ jobs:
       if: ${{ matrix.platform.provider == 'directml' }}
       run: cargo build --release --features directml
       env:
-        ORT_LIB_LOCATION: ./onnxruntime/Windows
+        # Should be set absolute path to onnxruntime/Windows
+        ORT_LIB_LOCATION: ${{ github.workspace }}/onnxruntime/Windows
 
     - name: Build
       if: ${{ matrix.platform.provider != 'directml' }}
