@@ -80,12 +80,12 @@ jobs:
       shell: bash
       run: |
         mkdir -p dist
-        cp ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }} dist/ || \
-          cp ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}.exe dist/ || \
-          cp ${{ env.REPO_NAME }}/target/release/*.so dist/ || \
-          cp ${{ env.REPO_NAME }}/target/release/*.dll dist/ || \
-          cp ${{ env.REPO_NAME }}/target/release/*.lib dist/ || \
-          cp onnxruntime/build/Windows/Release/Release/DirectML.dll dist/ || true
+        cp ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }} dist/ || true
+        cp ${{ env.REPO_NAME }}/target/release/${{ env.REPO_NAME }}.exe dist/ || true
+        cp ${{ env.REPO_NAME }}/target/release/*.so dist/ || true
+        cp ${{ env.REPO_NAME }}/target/release/*.dll dist/ || true
+        cp ${{ env.REPO_NAME }}/target/release/*.lib dist/ || true
+        cp onnxruntime/build/Windows/Release/Release/DirectML.dll dist/ || true
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
