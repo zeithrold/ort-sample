@@ -85,7 +85,7 @@ jobs:
         path: onnxruntime
 
     - name: Display structure of downloaded files
-      run: ls -R onnxruntime
+      run: ls -R .
 
     - name: Build (with DirectML)
       if: ${{ matrix.platform.provider == 'directml' }}
