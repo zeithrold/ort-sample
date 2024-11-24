@@ -21,14 +21,14 @@ jobs:
         ref: v${{ env.ONNXRUNTIME_VERSION }}
         submodules: 'recursive'
     
-    - name: Set up Cache
+    - name: Set up cache
       uses: actions/cache@v4
       id: build-cache
       with:
         path: build
         key: onnxruntime-directml-${{ env.ONNXRUNTIME_VERSION }}
 
-    - name: Build onnxruntime with DirectML
+    - name: Build ONNX Runtime with DirectML
       if: steps.build-cache.outputs.cache-hit != 'true'
       run: .\\build.bat --config Release --parallel --use_dml --skip_tests
 
@@ -42,7 +42,6 @@ jobs:
       with:
         name: onnxruntime-directml
         path: build
-
 
   build:
     needs: build-onnxruntime-directml
@@ -89,7 +88,7 @@ jobs:
 
     - name: Build (with DirectML)
       if: ${{ matrix.platform.provider == 'directml' }}
-      run: cargo build --release --features directml --target ${{ matrix.platform.os }}
+      run: cargo build --release --features directml
       env:
         ORT_LIB_LOCATION: build/Windows
 
