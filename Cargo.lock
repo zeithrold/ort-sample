@@ -726,6 +726,7 @@ dependencies = [
  "humantime",
  "log",
  "native-dialog",
+ "ndarray",
  "ort",
  "ort-sys",
 ]
