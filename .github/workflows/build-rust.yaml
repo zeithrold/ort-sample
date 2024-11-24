@@ -14,13 +14,6 @@ jobs:
     runs-on: windows-latest
     steps:
 
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        repository: microsoft/onnxruntime
-        ref: v${{ env.ONNXRUNTIME_VERSION }}
-        submodules: 'recursive'
-    
     - name: Set up cache
       uses: actions/cache@v4
       id: build-cache
@@ -28,11 +21,20 @@ jobs:
         path: build
         key: onnxruntime-directml-${{ env.ONNXRUNTIME_VERSION }}
 
+    - name: Checkout code
+      uses: actions/checkout@v4
+      if: steps.build-cache.outputs.cache-hit != 'true'
+      with:
+        repository: microsoft/onnxruntime
+        ref: v${{ env.ONNXRUNTIME_VERSION }}
+        submodules: 'recursive'
+    
     - name: Build ONNX Runtime with DirectML
       if: steps.build-cache.outputs.cache-hit != 'true'
       run: .\\build.bat --config Release --parallel --use_dml --skip_tests
 
     - name: Remove unnecessary files
+      if: steps.build-cache.outputs.cache-hit != 'true'
       run: rm -rf build/Windows/Release/_deps
       shell: bash
 
