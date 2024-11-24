@@ -33,17 +33,15 @@ jobs:
       if: steps.build-cache.outputs.cache-hit != 'true'
       run: .\\build.bat --config Release --parallel --use_dml --skip_tests
 
-    - name: Remove unnecessary files
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      run: rm -rf build/Windows/Release/_deps
-      shell: bash
+    - name: Make archive
+      run: 7z a build.7z build
 
     - name: Upload artifact
       id: upload-artifact
       uses: actions/upload-artifact@v4
       with:
+        path: build.7z
         name: onnxruntime-directml
-        path: build
 
   build:
     needs: build-onnxruntime-directml
@@ -83,14 +81,22 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: onnxruntime-directml
-        path: onnxruntime
+        path: download
+    
+    - name: Extract onnxruntime-directml artifact
+      if: ${{ matrix.platform.provider == 'directml' }}
+      run: 7z x download\build.7z -o$GITHUB_WORKSPACE\onnxruntime
+
+    - name: List onnxruntime-directml artifact
+      if: ${{ matrix.platform.provider == 'directml' }}
+      run: ls $GITHUB_WORKSPACE\onnxruntime\Windows
 
     - name: Build (with DirectML)
       if: ${{ matrix.platform.provider == 'directml' }}
       run: cargo build --release --features directml
       env:
         # Should be set absolute path to onnxruntime/Windows
-        ORT_LIB_LOCATION: ${{ github.workspace }}\\onnxruntime\\Windows
+        ORT_LIB_LOCATION: ${{ github.workspace }}\onnxruntime\Windows
 
     - name: Build
       if: ${{ matrix.platform.provider != 'directml' }}
