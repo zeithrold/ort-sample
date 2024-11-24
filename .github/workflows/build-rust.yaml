@@ -86,3 +86,4 @@ jobs:
           ${{ env.REPO_NAME }}/target/release/*.so
           ${{ env.REPO_NAME }}/target/release/*.dll
           ${{ env.REPO_NAME }}/target/release/*.lib
+          onnxruntime/build/Windows/Release/Release/DirectML.dll
