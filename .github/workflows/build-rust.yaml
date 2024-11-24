@@ -41,6 +41,7 @@ jobs:
       if: ${{ matrix.platform.provider == 'directml' && steps.build-cache.outputs.cache-hit != 'true' }}
       with:
         repository: microsoft/onnxruntime
+        path: onnxruntime
         ref: v${{ env.ONNXRUNTIME_VERSION }}
         submodules: 'recursive'
 
